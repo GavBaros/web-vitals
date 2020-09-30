@@ -42,14 +42,20 @@ app.use((req, res, next) => {
 // Add a "collect" endpoint to simulate analytics beacons.
 app.post('/collect', bodyParser.text(), (req, res) => {
   // Uncomment to log the metric when manually testing.
-  // console.log(JSON.stringify(JSON.parse(req.body), null, 2));
+  console.log(JSON.stringify(JSON.parse(req.body), null, 2));
 
   fs.appendFileSync(BEACON_FILE, req.body + '\n');
   res.end();
 });
 
 app.get('/test/:view', function(req, res) {
-  res.send(nunjucks.render(`${req.params.view}.njk`, req.query));
+  const data = {
+    ...req.query,
+    modulePath: `/dist/web-vitals.${
+        req.query.polyfill ? `external-polyfill` : `full`}.js`,
+    webVitalsPolyfill: fs.readFileSync('./dist/polyfill.js', 'utf-8'),
+  }
+  res.send(nunjucks.render(`${req.params.view}.njk`, data));
 });
 
 app.use(express.static('./'));

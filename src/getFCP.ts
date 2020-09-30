@@ -18,13 +18,13 @@ import {bindReporter} from './lib/bindReporter.js';
 import {getFirstHidden} from './lib/getFirstHidden.js';
 import {initMetric} from './lib/initMetric.js';
 import {observe} from './lib/observe.js';
+import {onBFCacheRestore} from './lib/onBFCacheRestore.js';
 import {ReportHandler} from './types.js';
 
 
 export const getFCP = (onReport: ReportHandler) => {
-  const metric = initMetric('FCP');
   const firstHidden = getFirstHidden();
-
+  let metric = initMetric('FCP');
   let report: ReturnType<typeof bindReporter>;
 
   const entryHandler = (entry: PerformanceEntry) => {
@@ -34,6 +34,7 @@ export const getFCP = (onReport: ReportHandler) => {
         metric.value = entry.startTime;
         metric.isFinal = true;
         metric.entries.push(entry);
+
         report();
       }
     }
@@ -42,5 +43,17 @@ export const getFCP = (onReport: ReportHandler) => {
   const po = observe('paint', entryHandler);
   if (po) {
     report = bindReporter(onReport, metric, po);
+
+    onBFCacheRestore((event) => {
+      metric = initMetric('FCP');
+      report = bindReporter(onReport, metric, po);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          metric.value = performance.now() - event.timeStamp;
+          metric.isFinal = true;
+          report();
+        });
+      });
+    });
   }
 };

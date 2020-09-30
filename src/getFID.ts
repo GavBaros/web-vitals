@@ -18,34 +18,16 @@ import {bindReporter} from './lib/bindReporter.js';
 import {getFirstHidden} from './lib/getFirstHidden.js';
 import {initMetric} from './lib/initMetric.js';
 import {observe, PerformanceEntryHandler} from './lib/observe.js';
+import {onBFCacheRestore} from './lib/onBFCacheRestore.js';
 import {onHidden} from './lib/onHidden.js';
-import {ReportHandler} from './types.js';
+import {PerformanceEventTiming, ReportHandler} from './types.js';
+import {firstInputPolyfill, resetFirstInputPolyfill} from './lib/polyfills/firstInputPolyfill.js';
 
-
-interface FIDPolyfillCallback {
-  (value: number, event: Event): void;
-}
-
-interface FIDPolyfill {
-  onFirstInputDelay: (onReport: FIDPolyfillCallback) => void;
-}
-
-declare global {
-  interface Window {
-    perfMetrics: FIDPolyfill;
-  }
-}
-
-// https://wicg.github.io/event-timing/#sec-performance-event-timing
-interface PerformanceEventTiming extends PerformanceEntry {
-  processingStart: DOMHighResTimeStamp;
-  cancelable?: boolean;
-  target?: Element;
-}
 
 export const getFID = (onReport: ReportHandler) => {
-  const metric = initMetric('FID');
   const firstHidden = getFirstHidden();
+  let metric = initMetric('FID');
+  let report: ReturnType<typeof bindReporter>;
 
   const entryHandler = (entry: PerformanceEventTiming) => {
     // Only report if the page wasn't hidden prior to the first input.
@@ -58,31 +40,33 @@ export const getFID = (onReport: ReportHandler) => {
   };
 
   const po = observe('first-input', entryHandler as PerformanceEntryHandler);
-  const report = bindReporter(onReport, metric, po);
+  report = bindReporter(onReport, metric, po);
 
   if (po) {
     onHidden(() => {
       po.takeRecords().map(entryHandler as PerformanceEntryHandler);
-      po.disconnect();
     }, true);
-  } else {
-    if (window.perfMetrics && window.perfMetrics.onFirstInputDelay) {
-      window.perfMetrics.onFirstInputDelay((value: number, event: Event) => {
-        // Only report if the page wasn't hidden prior to the first input.
-        if (event.timeStamp < firstHidden.timeStamp) {
-          metric.value = value;
-          metric.isFinal = true;
-          metric.entries = [{
-            entryType: 'first-input',
-            name: event.type,
-            target: event.target,
-            cancelable: event.cancelable,
-            startTime: event.timeStamp,
-            processingStart: event.timeStamp + value,
-          } as PerformanceEventTiming];
-          report();
-        }
-      });
+  }
+
+  if (self.__WEB_VITALS_EXTERNAL_POLYFILL__) {
+    // Prefer the native implementation if available,
+    if (!po) {
+      window.webVitals.firstInputPolyfill(entryHandler)
     }
+    onBFCacheRestore(() => {
+      metric = initMetric('FID');
+      report = bindReporter(onReport, metric, po);
+      window.webVitals.resetFirstInputPolyfill();
+      window.webVitals.firstInputPolyfill(entryHandler);
+    });
+  } else {
+    onBFCacheRestore(() => {
+      metric = initMetric('FID');
+      report = bindReporter(onReport, metric, po);
+      resetFirstInputPolyfill();
+      firstInputPolyfill((entry) => {
+        entryHandler(entry)
+      });
+    });
   }
 };

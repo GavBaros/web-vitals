@@ -223,7 +223,6 @@ describe('getLCP()', async function() {
     assert.strictEqual(lcp1.value, lcp1.delta);
     assert.strictEqual(lcp1.entries.length, 1);
     assert.strictEqual(lcp1.entries[0].element, 'h1');
-    assert.strictEqual(lcp1.isFinal, true);
   });
 
   it('stops reporting after the document changes to hidden (reportAllChanges === true)', async function() {
@@ -251,14 +250,12 @@ describe('getLCP()', async function() {
     assert.strictEqual(lcp1.value, lcp1.delta);
     assert.strictEqual(lcp1.entries.length, 1);
     assert.strictEqual(lcp1.entries[0].element, 'h1');
-    assert.strictEqual(lcp1.isFinal, false);
 
     assert.strictEqual(lcp2.value, lcp1.value);
     assert.strictEqual(lcp2.name, 'LCP');
     assert.strictEqual(lcp2.delta, 0);
     assert.strictEqual(lcp2.entries.length, 1);
     assert.strictEqual(lcp2.entries[0].element, 'h1');
-    assert.strictEqual(lcp2.isFinal, true);
   });
 });
 
@@ -266,34 +263,30 @@ const assertStandardReportsAreCorrect = (beacons) => {
   const [lcp] = beacons;
 
   assert(lcp.value > 500); // Greater than the image load delay.
-  assert(lcp.id.match(/\d+-\d+/));
+  assert(lcp.id.match(/^v1-\d+-\d+$/));
   assert.strictEqual(lcp.name, 'LCP');
   assert.strictEqual(lcp.value, lcp.delta);
   assert.strictEqual(lcp.entries.length, 2);
-  assert.strictEqual(lcp.isFinal, true);
 };
 
 const assertFullReportsAreCorrect = (beacons) => {
   const [lcp1, lcp2, lcp3] = beacons;
 
   assert(lcp1.value < 500); // Less than the image load delay.
-  assert(lcp1.id.match(/\d+-\d+/));
+  assert(lcp1.id.match(/^v1-\d+-\d+$/));
   assert.strictEqual(lcp1.name, 'LCP');
   assert.strictEqual(lcp1.value, lcp1.delta);
   assert.strictEqual(lcp1.entries.length, 1);
-  assert.strictEqual(lcp1.isFinal, false);
 
   assert(lcp2.value > 500); // Greater than the image load delay.
   assert.strictEqual(lcp2.value, lcp1.value + lcp2.delta);
   assert.strictEqual(lcp2.name, 'LCP');
   assert.strictEqual(lcp2.id, lcp1.id);
   assert.strictEqual(lcp2.entries.length, 2);
-  assert.strictEqual(lcp2.isFinal, false);
 
   assert.strictEqual(lcp3.value, lcp2.value);
   assert.strictEqual(lcp3.name, 'LCP');
   assert.strictEqual(lcp3.id, lcp2.id);
   assert.strictEqual(lcp3.delta, 0);
   assert.strictEqual(lcp3.entries.length, 2);
-  assert.strictEqual(lcp3.isFinal, true);
 };

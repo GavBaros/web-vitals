@@ -17,6 +17,7 @@
 import {initMetric} from './lib/initMetric.js';
 import {observe, PerformanceEntryHandler} from './lib/observe.js';
 import {onHidden} from './lib/onHidden.js';
+import {onBFCacheRestore} from './lib/onBFCacheRestore.js';
 import {bindReporter} from './lib/bindReporter.js';
 import {ReportHandler} from './types.js';
 
@@ -28,8 +29,7 @@ interface LayoutShift extends PerformanceEntry {
 }
 
 export const getCLS = (onReport: ReportHandler, reportAllChanges = false) => {
-  const metric = initMetric('CLS', 0);
-
+  let metric = initMetric('CLS', 0);
   let report: ReturnType<typeof bindReporter>;
 
   const entryHandler = (entry: LayoutShift) => {
@@ -45,13 +45,14 @@ export const getCLS = (onReport: ReportHandler, reportAllChanges = false) => {
   if (po) {
     report = bindReporter(onReport, metric, po, reportAllChanges);
 
-    onHidden(({isUnloading}) => {
+    onHidden(() => {
       po.takeRecords().map(entryHandler as PerformanceEntryHandler);
-
-      if (isUnloading) {
-        metric.isFinal = true;
-      }
       report();
+    });
+
+    onBFCacheRestore(() => {
+      metric = initMetric('CLS', 0);
+      report = bindReporter(onReport, metric, po, reportAllChanges);
     });
   }
 };

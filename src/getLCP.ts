@@ -18,15 +18,15 @@ import {bindReporter} from './lib/bindReporter.js';
 import {getFirstHidden} from './lib/getFirstHidden.js';
 import {initMetric} from './lib/initMetric.js';
 import {observe, PerformanceEntryHandler} from './lib/observe.js';
+import {onBFCacheRestore} from './lib/onBFCacheRestore.js';
 import {onHidden} from './lib/onHidden.js';
 import {whenInput} from './lib/whenInput.js';
 import {ReportHandler} from './types.js';
 
 
 export const getLCP = (onReport: ReportHandler, reportAllChanges = false) => {
-  const metric = initMetric('LCP');
   const firstHidden = getFirstHidden();
-
+  let metric = initMetric('LCP');
   let report: ReturnType<typeof bindReporter>;
 
   const entryHandler = (entry: PerformanceEntry) => {
@@ -61,5 +61,17 @@ export const getLCP = (onReport: ReportHandler, reportAllChanges = false) => {
 
     whenInput().then(onFinal);
     onHidden(onFinal, true);
+
+    onBFCacheRestore((event) => {
+      metric = initMetric('LCP');
+      report = bindReporter(onReport, metric, po, reportAllChanges);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          metric.value = performance.now() - event.timeStamp;
+          metric.isFinal = true;
+          report();
+        });
+      });
+    });
   }
 };
