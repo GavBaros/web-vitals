@@ -34,6 +34,12 @@
       // Log for easier manual testing.
       console.log(cls);
 
+      // Sources is verbose to serialize, so remove first.
+      cls = {
+        ...cls,
+        entries: cls.entries.map((e) => {}),
+      };
+
       // Test sending the metric to an analytics endpoint.
       navigator.sendBeacon(`/collect`, JSON.stringify(cls));
     }, self.__reportAllChanges);

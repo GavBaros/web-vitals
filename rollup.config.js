@@ -26,11 +26,11 @@ const configurePlugins = ({module, externalPolyfill = false}) => {
         },
       }]],
     }),
-    terser({
-      module,
-      mangle: true,
-      compress: true,
-    }),
+    // terser({
+    //   module,
+    //   mangle: true,
+    //   compress: true,
+    // }),
     replace({
       'self.__WEB_VITALS_EXTERNAL_POLYFILL__': externalPolyfill,
     })

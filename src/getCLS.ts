@@ -46,12 +46,14 @@ export const getCLS = (onReport: ReportHandler, reportAllChanges = false) => {
     report = bindReporter(onReport, metric, po, reportAllChanges);
 
     onHidden(() => {
+      console.log(metric.id, {metric});
       po.takeRecords().map(entryHandler as PerformanceEntryHandler);
       report();
     });
 
     onBFCacheRestore(() => {
       metric = initMetric('CLS', 0);
+      console.log(metric.id, {metric});
       report = bindReporter(onReport, metric, po, reportAllChanges);
     });
   }

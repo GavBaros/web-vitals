@@ -39,6 +39,49 @@
       }
     }());
   </script>
+  {% if polyfill %}
+    <script>{{ webVitalsPolyfill | safe }}</script>
+  {% endif %}
+  <script>
+    window.stubVisibilityChange = (visibilityState) => {
+      if (visibilityState === 'hidden') {
+        Object.defineProperty(document, 'visibilityState', {
+          value: visibilityState,
+          configurable: true,
+        });
+        document.body.hidden = true;
+      } else {
+        delete document.visibilityState;
+        document.body.hidden = false;
+      }
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+
+    window.stubForwardBack = (visibilityStateAfterRestore) => {
+      window.dispatchEvent(new PageTransitionEvent('pagehide', {
+        persisted: true,
+      }));
+      Object.defineProperty(document, 'visibilityState', {
+        value: 'hidden',
+        configurable: true,
+      });
+      document.body.hidden = true;
+      document.dispatchEvent(new Event('visibilitychange'));
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (visibilityStateAfterRestore !== 'hidden') {
+            delete document.visibilityState;
+            document.body.hidden = false;
+          }
+          document.dispatchEvent(new Event('visibilitychange'));
+          window.dispatchEvent(new PageTransitionEvent('pageshow', {
+            persisted: true,
+          }));
+        });
+      });
+    };
+  </script>
   {% block head %}{% endblock %}
   <style>
     html {

@@ -38,11 +38,13 @@ export const getFirstHidden = () => {
     // visibilityState.
     if (self.__WEB_VITALS_EXTERNAL_POLYFILL__) {
       firstHiddenTime = self.webVitals.firstHiddenTime;
+      if (firstHiddenTime === Infinity) {
+        trackChanges();
+      }
     } else {
       firstHiddenTime = initHiddenTime();
+      trackChanges();
     }
-
-    trackChanges();
 
     // Reset the time on bfcache restores.
     onBFCacheRestore(() => {

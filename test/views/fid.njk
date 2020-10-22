@@ -15,12 +15,6 @@
 
 {% extends 'layout.njk' %}
 
-{% block head %}
-  {% if polyfill %}
-    <script>{{ webVitalsPolyfill | safe }}</script>
-  {% endif %}
-{% endblock %}
-
 {% block content %}
   <h1>FID Test</h1>
   <p>

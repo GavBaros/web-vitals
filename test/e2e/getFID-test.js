@@ -63,6 +63,8 @@ describe('getFID()', async function() {
 
     const beacons = await getBeacons();
     assert.strictEqual(beacons.length, 0);
+
+    throw 'assert no entries after bfcache restores if the polyfill is not used';
   });
 
   it('falls back to the polyfill in non-supporting browsers', async function() {
@@ -131,6 +133,10 @@ describe('getFID()', async function() {
 
     const beacons = await getBeacons();
     assert.strictEqual(beacons.length, 0);
+  });
+
+  it('reports the first input delay after bfcache restores', async function() {
+    throw 'implement me';
   });
 });
 

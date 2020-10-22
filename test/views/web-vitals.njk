@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Web Vitals Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <p><img style="max-width: 100px" src="https://img.webmd.com/dtmcms/live/webmd/consumer_assets/site_images/article_thumbnails/slideshows/is_my_cat_normal_slideshow/1800x1200_is_my_cat_normal_slideshow.jpg" alt="Gray square" /></p>
+  <p>Text below a slow-loading image</p>
+
+  <script type="module">
+    import {getCLS, getFID, getLCP} from 'https://unpkg.com/web-vitals?module';
+
+    getCLS(console.log);
+    getFID(console.log);
+    getLCP(console.log);
+  </script>
+</body>
+</html>
